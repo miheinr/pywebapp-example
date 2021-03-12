@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mywebfuncs
+  name: mywebfuncs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mywebfuncs
+  template:
+    metadata:
+      labels:
+        app: mywebfuncs
+    spec:
+      containers:
+        - image: quay.io/miheinr/mywebfuncs:latest
+          imagePullPolicy: Always
+          name: mywebfuncs
+          ports:
+            - containerPort: 8080
+              protocol: TCP
