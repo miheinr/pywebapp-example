@@ -6,9 +6,9 @@ app = Flask(__name__)
 @app.route('/')
 def hello_world():
     cpuload_single.cpuload()
-    return 'Hi, World!'
+    return 'Hello, World!'
 
 @app.route('/<name>')
 def hello_name(name):
     cpuload_single.cpuload()
-    return f'Hi, {name}!'
+    return f'Hello, {name}!'
