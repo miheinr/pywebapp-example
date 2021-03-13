@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: update-knservice
+spec:
+  params:
+    - name: knservice
+      description: The name of the knservice where to patch the image
+      type: string
+    - name: image_and_tag
+      description: Location and tag of image to be patched with
+      type: string
+  steps:
+    - name: patch
+      image: quay.io/openshift/origin-cli:latest
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          oc patch service.serving.knative.dev $(inputs.params.knservice) --type=json --patch='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "$(inputs.params.image_and_tag)"}, {"op": "replace", "path": "/spec/template/spec/containers/0/name", "value": "$(inputs.params.knservice)"}]'

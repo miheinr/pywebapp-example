@@ -1,0 +1,118 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-and-knservice
+spec:
+  workspaces:
+  - name: shared-workspace
+  params:
+  - name: knservice-name
+    type: string
+    description: name of the knservice to be patched
+  - name: git-url
+    type: string
+    description: url of the git repo for the code of knservice
+  - name: git-revision
+    type: string
+    description: revision to be used from repo of the code for knservice
+    # default: "master"
+  - name: IMAGE
+    type: string
+    description: image to be build from the code
+  tasks:
+  - name: skopeo-inspect
+    taskRef:
+      name: skopeo-inspect
+    params:
+    - name: image_and_tag
+      value: $(params.IMAGE):$(params.git-revision)
+    - name: TLSVERIFY
+      value: "false"
+  - name: fetch-repository
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["no"]
+    taskRef:
+      name: git-clone
+      kind: ClusterTask
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: $(params.git-revision)
+  - name: build-image
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["no"]
+    taskRef:
+      name: buildah
+      kind: ClusterTask
+    params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: IMAGE
+      value: $(params.IMAGE):$(params.git-revision)
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+    runAfter:
+    - fetch-repository
+  - name: create-manifests
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["no"]
+    taskRef:
+      name: create-manifests
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+    runAfter:
+    - build-image
+  - name: update-knservice
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["no"]
+    taskRef:
+      name: update-knservice
+    params:
+    - name: knservice
+      value: $(params.knservice-name)
+    - name: image_and_tag
+      value: $(params.IMAGE):$(params.git-revision)
+    runAfter:
+    - create-manifests
+  - name: create-manifests2
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["yes"]
+    taskRef:
+      name: create-manifests
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+  - name: update-knservice2
+    when:
+    - input: $(tasks.skopeo-inspect.results.image-in-registry)
+      operator: in
+      values: ["yes"]
+    taskRef:
+      name: update-knservice
+    params:
+    - name: knservice
+      value: $(params.knservice-name)
+    - name: image_and_tag
+      value: $(params.IMAGE):$(params.git-revision)
+    runAfter:
+    - create-manifests2

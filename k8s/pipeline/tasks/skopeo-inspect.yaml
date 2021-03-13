@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: skopeo-inspect
+spec:
+  params:
+    - name: image_and_tag
+      description: Location and tag of image to be inspected
+      type: string
+    - name: TLSVERIFY
+      description: true or false
+      type: string
+      default: "true"
+  results:
+    - name: image-in-registry
+      description: yes or no
+  steps:
+    - name: inspect
+      image: quay.io/skopeo/stable:latest
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          (echo -n no | tee $(results.image-in-registry.path)) &&
+          /usr/bin/skopeo inspect --tls-verify=$(inputs.params.TLSVERIFY) docker://$(inputs.params.image_and_tag) &&
+          (echo -n yes | tee $(results.image-in-registry.path)) || exit 0
