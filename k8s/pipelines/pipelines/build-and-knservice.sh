@@ -6,5 +6,5 @@ tkn pipeline start build-and-knservice -w name=shared-workspace,claimName=source
     -p knservice-name=mywebfuncs-kn \
     -p git-url=https://github.com/miheinr/pywebapp-example.git \
     -p git-revision=${COMMIT} \
-    -p IMAGE=image-registry.openshift-image-registry.svc:5000/${PROJECT)/mywebfuncs \
+    -p IMAGE=image-registry.openshift-image-registry.svc:5000/${PROJECT}/mywebfuncs \
     --showlog
