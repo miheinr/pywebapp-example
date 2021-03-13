@@ -1,6 +1,6 @@
 #!/bin/sh
 PROJECT=mywebfuncs
-COMMIT=48cad9c56bdab76695ad168aa04531f492d1778d
+COMMIT=daa104b4a3f5dbee6627da3126241c308c934b7f
 
 tkn pipeline start build-and-knservice -w name=shared-workspace,claimName=source-pvc \
     -p knservice-name=mywebfuncs-kn \
